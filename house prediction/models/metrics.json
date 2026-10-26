@@ -1,0 +1,29 @@
+{
+    "algorithm": "Linear Regression (Ordinary Least Squares)",
+    "framework": "scikit-learn",
+    "trained_at": "2026-10-26 18:24:49",
+    "total_samples": 2500,
+    "train_samples": 2000,
+    "test_samples": 500,
+    "features": [
+        "area_sqft",
+        "bedrooms",
+        "bathrooms",
+        "floors",
+        "age_years"
+    ],
+    "target": "price_inr",
+    "metrics": {
+        "r2_score": 0.9928,
+        "mae": 230612.26,
+        "rmse": 291047.23
+    },
+    "coefficients": {
+        "area_sqft": 4814.2,
+        "bedrooms": 259433.35,
+        "bathrooms": 165262.69,
+        "floors": 337967.14,
+        "age_years": -54841.87
+    },
+    "intercept": 1227666.97
+}

@@ -1,0 +1,28 @@
+[Unit]
+Description=House Price Prediction Flask App with Gunicorn
+After=network.target
+
+[Service]
+# User and Group: Use ec2-user for Amazon Linux 2023, or ubuntu for Ubuntu EC2
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/var/www/house-price-prediction
+
+# Environment Variables
+Environment="PATH=/var/www/house-price-prediction/venv/bin:/usr/bin"
+Environment="PORT=8000"
+Environment="FLASK_ENV=production"
+Environment="SECRET_KEY=production-secure-random-token-here"
+
+# Start Gunicorn via virtual environment binary
+ExecStart=/var/www/house-price-prediction/venv/bin/gunicorn --config deployment/gunicorn.conf.py app:app
+
+# Auto restart policy on unexpected exit
+Restart=always
+RestartSec=5s
+KillMode=mixed
+TimeoutStopSec=10
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

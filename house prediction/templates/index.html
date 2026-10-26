@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction | ML Dashboard</title>
+    <!-- Google Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h2>HousePrice<span class="accent-text">AI</span></h2>
+                    <p class="brand-sub">Analytics Dashboard</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <p class="nav-header">NAVIGATION</p>
+                <a href="#dashboard" class="nav-item active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect width="7" height="9" x="3" y="3" rx="1"/>
+                        <rect width="7" height="5" x="14" y="3" rx="1"/>
+                        <rect width="7" height="9" x="14" y="12" rx="1"/>
+                        <rect width="7" height="5" x="3" y="16" rx="1"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#predict-section" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    <span>Price Predictor</span>
+                </a>
+                <a href="#history-section" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    <span>Session Trend</span>
+                </a>
+                <a href="#model-info-section" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <span>Model Metrics</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="badge-deploy">
+                    <span class="status-indicator online"></span>
+                    <span>AWS EC2 Ready</span>
+                </div>
+                <p class="sidebar-version">v1.0.0 &bull; Flask + Scikit-Learn</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Navigation Bar -->
+            <header class="topbar" id="dashboard">
+                <div class="topbar-title-wrap">
+                    <h1 class="topbar-title">House Price Prediction</h1>
+                    <p class="topbar-subtitle">Real-time residential property valuation powered by Scikit-Learn Linear Regression</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="model-badge">
+                        <span class="pulse-dot"></span>
+                        <span>Model: OLS Linear Regression</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content Container -->
+            <div class="content-body">
+                {% if not model_loaded %}
+                <div class="alert alert-error">
+                    <strong>Model Error:</strong> Trained weights were not found. Please run <code>python train_model.py</code> to initialize the model artifact.
+                    {% if load_error_message %}<div class="alert-details">{{ load_error_message }}</div>{% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Section 1: Four Statistic Cards -->
+                <section class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div class="stat-data">
+                            <p class="stat-label">Session Predictions</p>
+                            <h3 class="stat-value" id="stat-total-count">{{ stats.total_predictions }}</h3>
+                            <span class="stat-sub">Active session count</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="stat-data">
+                            <p class="stat-label">Latest Predicted Price</p>
+                            <h3 class="stat-value" id="stat-latest-price">{{ stats.latest_price }}</h3>
+                            <span class="stat-sub" id="stat-latest-sub">{% if stats.latest_price != '—' %}{{ stats.latest_price_compact }}{% else %}No predictions yet{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-purple">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="20" x2="12" y2="10"/>
+                                <line x1="18" y1="20" x2="18" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="16"/>
+                            </svg>
+                        </div>
+                        <div class="stat-data">
+                            <p class="stat-label">Average Session Price</p>
+                            <h3 class="stat-value" id="stat-avg-price">{{ stats.average_price }}</h3>
+                            <span class="stat-sub" id="stat-avg-sub">{% if stats.average_price != '—' %}{{ stats.average_price_compact }}{% else %}No predictions yet{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-amber">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </div>
+                        <div class="stat-data">
+                            <p class="stat-label">ML Algorithm</p>
+                            <h3 class="stat-value font-md">Linear Regression</h3>
+                            <span class="stat-sub">Scikit-Learn OLS (R²: {{ model_info.metrics.r2_score if model_info.metrics else '0.99' }})</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2: Two-Column Prediction & Results Section -->
+                <div class="grid-2-col" id="predict-section">
+                    <!-- Left Column: Prediction Form -->
+                    <div class="card form-card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">House Features Input</h2>
+                                <p class="card-description">Enter structural parameters to estimate current market value in INR.</p>
+                            </div>
+                            <span class="pill pill-navy">5 Features</span>
+                        </div>
+
+                        <!-- Form Error Message Banner -->
+                        <div id="form-error-banner" class="alert alert-error" style="display: none;"></div>
+
+                        <form id="prediction-form" class="prediction-form" novalidate>
+                            <!-- Field 1: Area -->
+                            <div class="form-group">
+                                <label for="area_sqft" class="form-label">
+                                    <span>Built-up Area (Sq Ft)</span>
+                                    <span class="input-hint">Range: 100 - 25,000</span>
+                                </label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="area_sqft" name="area_sqft" class="form-control" placeholder="e.g. 1650" min="100" max="25000" step="1" required>
+                                    <span class="input-suffix">sq ft</span>
+                                </div>
+                                <span class="field-error" id="error-area_sqft"></span>
+                            </div>
+
+                            <div class="form-row">
+                                <!-- Field 2: Bedrooms -->
+                                <div class="form-group col-half">
+                                    <label for="bedrooms" class="form-label">
+                                        <span>Bedrooms (BHK)</span>
+                                        <span class="input-hint">1 - 20</span>
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="bedrooms" name="bedrooms" class="form-control" placeholder="e.g. 3" min="1" max="20" step="1" required>
+                                        <span class="input-suffix">BHK</span>
+                                    </div>
+                                    <span class="field-error" id="error-bedrooms"></span>
+                                </div>
+
+                                <!-- Field 3: Bathrooms -->
+                                <div class="form-group col-half">
+                                    <label for="bathrooms" class="form-label">
+                                        <span>Bathrooms</span>
+                                        <span class="input-hint">1 - 15</span>
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="bathrooms" name="bathrooms" class="form-control" placeholder="e.g. 2" min="1" max="15" step="1" required>
+                                        <span class="input-suffix">baths</span>
+                                    </div>
+                                    <span class="field-error" id="error-bathrooms"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <!-- Field 4: Floors -->
+                                <div class="form-group col-half">
+                                    <label for="floors" class="form-label">
+                                        <span>Number of Floors</span>
+                                        <span class="input-hint">1 - 10</span>
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="floors" name="floors" class="form-control" placeholder="e.g. 2" min="1" max="10" step="1" required>
+                                        <span class="input-suffix">floors</span>
+                                    </div>
+                                    <span class="field-error" id="error-floors"></span>
+                                </div>
+
+                                <!-- Field 5: Age -->
+                                <div class="form-group col-half">
+                                    <label for="age_years" class="form-label">
+                                        <span>Property Age (Years)</span>
+                                        <span class="input-hint">0 - 120 (0 = new)</span>
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="age_years" name="age_years" class="form-control" placeholder="e.g. 4" min="0" max="120" step="0.5" required>
+                                        <span class="input-suffix">yrs</span>
+                                    </div>
+                                    <span class="field-error" id="error-age_years"></span>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="form-actions">
+                                <button type="submit" id="btn-predict" class="btn btn-primary">
+                                    <span class="btn-text">Predict House Price</span>
+                                    <span class="btn-loader" style="display: none;">
+                                        <svg class="spinner" viewBox="0 0 50 50">
+                                            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                                        </svg>
+                                        Estimating...
+                                    </span>
+                                </button>
+                                <button type="button" id="btn-sample" class="btn btn-secondary">
+                                    Fill Sample Values
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right Column: Results Panel -->
+                    <div class="card result-card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Valuation Results</h2>
+                                <p class="card-description">Model inference output calculated via ordinary least squares.</p>
+                            </div>
+                            <span class="pill pill-green">Output</span>
+                        </div>
+
+                        <!-- Initial Empty State -->
+                        <div id="result-empty-state" class="empty-state">
+                            <div class="empty-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                    <polyline points="9 22 9 12 15 12 15 22"/>
+                                </svg>
+                            </div>
+                            <h3>Awaiting House Parameters</h3>
+                            <p>Fill out the property specifications on the left and click <strong>Predict House Price</strong> to calculate the estimated price.</p>
+                        </div>
+
+                        <!-- Active Result View (hidden initially) -->
+                        <div id="result-content-state" class="result-content" style="display: none;">
+                            <div class="result-badge-label">ESTIMATED HOUSE PRICE</div>
+                            <div class="price-display">
+                                <h2 class="price-value" id="result-price-inr">₹0</h2>
+                                <span class="price-compact" id="result-price-compact">₹0 Lakh</span>
+                            </div>
+
+                            <div class="result-divider"></div>
+
+                            <div class="feature-breakdown">
+                                <h4 class="breakdown-title">Evaluated Property Profile</h4>
+                                <div class="breakdown-grid">
+                                    <div class="breakdown-item">
+                                        <span class="item-label">Built-up Area</span>
+                                        <strong class="item-value" id="res-feat-area">—</strong>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="item-label">Bedrooms</span>
+                                        <strong class="item-value" id="res-feat-bed">—</strong>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="item-label">Bathrooms</span>
+                                        <strong class="item-value" id="res-feat-bath">—</strong>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="item-label">Stories/Floors</span>
+                                        <strong class="item-value" id="res-feat-floors">—</strong>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="item-label">Age</span>
+                                        <strong class="item-value" id="res-feat-age">—</strong>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="item-label">Unit Rate</span>
+                                        <strong class="item-value" id="res-feat-rate">—</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="result-note">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                                <span>Linear Regression formula: <code>Price = Intercept + &sum;(&beta;&#7522; &times; Feature&#7522;)</code></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Prediction History Chart -->
+                <section class="card chart-card" id="history-section">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Session Prediction History</h2>
+                            <p class="card-description">Live chart tracking house price estimations made during the active browser session.</p>
+                        </div>
+                        <span class="pill pill-gray" id="history-badge">0 Predictions</span>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="predictionChart" height="90"></canvas>
+                    </div>
+                </section>
+
+                <!-- Section 4: Model Information & Evaluation Metrics Section -->
+                <section class="card model-info-card" id="model-info-section">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Machine Learning Model Information</h2>
+                            <p class="card-description">Statistical evaluation of the trained Scikit-Learn Linear Regression model on unseen test data.</p>
+                        </div>
+                        <span class="pill pill-navy">Algorithm: Ordinary Least Squares</span>
+                    </div>
+
+                    <!-- Metrics Badges Grid -->
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <span class="metric-label">R² Determination Score</span>
+                            <span class="metric-val text-green">{{ model_info.metrics.r2_score if model_info.metrics else '0.9928' }}</span>
+                            <span class="metric-desc">Percentage of price variance explained</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Mean Absolute Error (MAE)</span>
+                            <span class="metric-val">₹{{ "{:,.0f}".format(model_info.metrics.mae) if model_info.metrics else '2,30,612' }}</span>
+                            <span class="metric-desc">Average absolute deviation per sample</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Root Mean Squared Error (RMSE)</span>
+                            <span class="metric-val">₹{{ "{:,.0f}".format(model_info.metrics.rmse) if model_info.metrics else '2,91,047' }}</span>
+                            <span class="metric-desc">Standard deviation of residuals</span>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Dataset Sample Size</span>
+                            <span class="metric-val">{{ model_info.total_samples if model_info.total_samples else '2,500' }}</span>
+                            <span class="metric-desc">80% Train split / 20% Test split</span>
+                        </div>
+                    </div>
+
+                    <!-- Learned Feature Weights Table -->
+                    <div class="coefficients-section">
+                        <h4 class="sub-heading">Learned Linear Regression Weights (&beta; Coefficients)</h4>
+                        <div class="table-responsive">
+                            <table class="coeff-table">
+                                <thead>
+                                    <tr>
+                                        <th>Feature Name</th>
+                                        <th>Feature Description</th>
+                                        <th>Weight / Coefficient</th>
+                                        <th>Market Effect</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>area_sqft</code></td>
+                                        <td>Built-up Carpet Area</td>
+                                        <td class="font-mono text-green">+₹{{ "{:,.2f}".format(model_info.coefficients.area_sqft) if model_info.coefficients else '4,814.20' }} / sqft</td>
+                                        <td>Positive (Increases price with size)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>bedrooms</code></td>
+                                        <td>Number of Bedrooms (BHK)</td>
+                                        <td class="font-mono text-green">+₹{{ "{:,.2f}".format(model_info.coefficients.bedrooms) if model_info.coefficients else '2,59,433.35' }} / room</td>
+                                        <td>Positive (Amenity & space premium)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>bathrooms</code></td>
+                                        <td>Number of Bathrooms</td>
+                                        <td class="font-mono text-green">+₹{{ "{:,.2f}".format(model_info.coefficients.bathrooms) if model_info.coefficients else '1,65,262.69' }} / bath</td>
+                                        <td>Positive (Plumbing & sanitary fixtures)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>floors</code></td>
+                                        <td>Number of Floors / Stories</td>
+                                        <td class="font-mono text-green">+₹{{ "{:,.2f}".format(model_info.coefficients.floors) if model_info.coefficients else '3,37,967.14' }} / floor</td>
+                                        <td>Positive (Vertical built-up capacity)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>age_years</code></td>
+                                        <td>Property Age in Years</td>
+                                        <td class="font-mono text-red">-₹{{ "{:,.2f}".format(model_info.coefficients.age_years|abs) if model_info.coefficients else '54,841.87' }} / yr</td>
+                                        <td>Negative (Structural depreciation)</td>
+                                    </tr>
+                                    <tr class="row-intercept">
+                                        <td><code>Intercept (&beta;&#8320;)</code></td>
+                                        <td>Base Price Offset</td>
+                                        <td class="font-mono" colspan="2">₹{{ "{:,.2f}".format(model_info.intercept) if model_info.intercept else '1,227,666.97' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Footer -->
+            <footer class="dashboard-footer">
+                <div class="footer-left">
+                    <p><strong>House Price Prediction</strong> &bull; Academic Machine Learning Project</p>
+                    <p class="footer-tech">Tech Stack: Python 3 &bull; Flask &bull; Scikit-Learn &bull; Jinja2 &bull; Chart.js &bull; Gunicorn &bull; Nginx &bull; AWS EC2</p>
+                </div>
+                <div class="footer-right">
+                    <span class="badge-status">Algorithm: Linear Regression</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Initial Data Injected for Chart.js -->
+    <script>
+        window.INITIAL_HISTORY = {{ stats.history | tojson | safe }};
+    </script>
+    <!-- Custom Dashboard Script -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
